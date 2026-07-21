@@ -1,5 +1,6 @@
 package org.eln2.mc.common.content
 
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.InteractionResult
 import org.ageseries.libage.data.OHM
 import org.ageseries.libage.data.Quantity
@@ -23,7 +24,23 @@ class VoltageSourceCell(
 ) : Cell(ci), SidedElectricalMonoMapped<VoltageSourceCell> {
     @SimObject
     val voltageSource = VoltageSourceObject(this).also {
-        it.source.potential = 240.0
+        it.source.potential = DEFAULT_POTENTIAL
+    }
+
+    override fun loadCellData(tag: CompoundTag) {
+        voltageSource.source.potential = if (tag.contains(POTENTIAL)) tag.getDouble(POTENTIAL) else DEFAULT_POTENTIAL
+    }
+
+    override fun saveCellData(): CompoundTag {
+        val tag = CompoundTag()
+        tag.putDouble(POTENTIAL, voltageSource.source.potential)
+
+        return tag
+    }
+
+    companion object {
+        const val POTENTIAL = "potential"
+        const val DEFAULT_POTENTIAL = 240.0
     }
 }
 
