@@ -78,17 +78,17 @@ class CurrentSourceCell(
     override val electricalSize: ElectricalSize
 ) : Cell(ci), SidedElectricalMonoMapped<VoltageSourceCell> {
     @SimObject
-    val voltageSource = CurrentSourceObject(this).also {
+    val currentSource = CurrentSourceObject(this).also {
         it.source.current = DEFAULT_CURRENT
     }
 
     override fun loadCellData(tag: CompoundTag) {
-        voltageSource.source.current = if (tag.contains(CURRENT)) tag.getDouble(CURRENT) else DEFAULT_CURRENT
+        currentSource.source.current = if (tag.contains(CURRENT)) tag.getDouble(CURRENT) else DEFAULT_CURRENT
     }
 
     override fun saveCellData(): CompoundTag {
         val tag = CompoundTag()
-        tag.putDouble(CURRENT, voltageSource.source.potential)
+        tag.putDouble(CURRENT, currentSource.source.current)
 
         return tag
     }
@@ -114,15 +114,15 @@ class CurrentSourcePart(ci: PartCreateInfo) : CellPart<CurrentSourceCell>(ci, El
             1.0
         }
 
-        cell.voltageSource.source.current = (cell.voltageSource.source.current + increment).coerceIn(0.0, 5000.0)
+        cell.currentSource.source.current = (cell.currentSource.source.current + increment).coerceIn(0.0, 5000.0)
 
         return InteractionResult.SUCCESS
     }
 
     override fun submitDisplay(builder: ComponentDisplayList) {
-        builder.debugInIDE { "crossResistance: ${Quantity(cell.voltageSource.resistors.crossResistance, OHM).classify()}" }
-        builder.quantityOutput(cell.voltageSource.source.readouts.potential)
-        builder.quantityOutput(cell.voltageSource.source.readouts.current)
-        builder.quantityOutput(cell.voltageSource.source.readouts.power)
+        builder.debugInIDE { "crossResistance: ${Quantity(cell.currentSource.resistors.crossResistance, OHM).classify()}" }
+        builder.quantityOutput(cell.currentSource.source.readouts.potential)
+        builder.quantityOutput(cell.currentSource.source.readouts.current)
+        builder.quantityOutput(cell.currentSource.source.readouts.power)
     }
 }
