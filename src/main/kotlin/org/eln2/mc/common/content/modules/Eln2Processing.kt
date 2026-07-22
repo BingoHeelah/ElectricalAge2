@@ -20,7 +20,6 @@ import org.ageseries.libage.sim.ConnectionParameters
 import org.ageseries.libage.sim.ThermalMassDefinition
 import org.ageseries.libage.utils.addUnique
 import org.eln2.mc.NodeFrictionDescription
-import org.eln2.mc.client.render.FlwMaterials
 import org.eln2.mc.client.render.FlwModels
 import org.eln2.mc.client.render.foundation.DummyBlockEntityRendererProvider
 import org.eln2.mc.client.render.foundation.SimpleBigBlockEntityVisual
@@ -308,14 +307,14 @@ object Eln2Processing : ContentModule() {
         MenuScreens.register(ALLOYING_SMELTER_MENU.get()) { menu, inventory, title ->
             BasicProgressScreen(
                 menu, inventory, title,
-                resource("textures/gui/container/crusher_base.png"),
-                resource("textures/gui/container/crusher_progress.png"),
-                79.0f,
-                103.0f
+                resource("textures/gui/container/alloying_smelter/base.png"),
+                resource("textures/gui/container/alloying_smelter/progress.png"),
+                71.0f,
+                114.0f
             )
         }
 
-        MenuScreens.register(BURNING_MENU.get()) { menu, inventory, title ->
+        MenuScreens.register(BURNER_MENU.get()) { menu, inventory, title ->
             BasicProgressScreen(
                 menu, inventory, title,
                 resource("textures/gui/container/burner_reactor/base.png"),
@@ -795,16 +794,16 @@ object Eln2Processing : ContentModule() {
         BurningRecipe.Serializer(it)
     }
 
-    val BURNING_BLOCK = blockAndItem("burner_reactor", ::BurningBlock)
+    val BURNER_BLOCK = blockAndItem("burner_reactor", ::BurnerBlock)
         .withSelfDrop()
 
-    val BURNING_BLOCK_ENTITY = blockEntityOnly(
+    val BURNER_BLOCK_ENTITY = blockEntityOnly(
         "burner_reactor",
-        BURNING_BLOCK.block,
-        ::BurningBlockEntity
+        BURNER_BLOCK.block,
+        ::BurnerBlockEntity
     )
 
-    val BURNING_MENU = menu("burner_reactor", ::BurningMenu)
+    val BURNER_MENU = menu("burner_reactor", ::BurnerMenu)
 
     //#endregion
 
