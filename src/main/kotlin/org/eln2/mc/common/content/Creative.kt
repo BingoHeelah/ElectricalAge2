@@ -94,7 +94,7 @@ class CurrentSourceCell(
     }
 
     companion object {
-        const val CURRENT = "potential"
+        const val CURRENT = "current"
         const val DEFAULT_CURRENT = 10.0
     }
 }
