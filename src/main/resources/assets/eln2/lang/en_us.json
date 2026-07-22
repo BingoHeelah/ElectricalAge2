@@ -158,6 +158,7 @@
     "item.eln2.micro_grid_lead_acid_battery_12v": "12V Lead-Acid Battery",
 
     "item.eln2.voltage_source": "Voltage Source",
+    "item.eln2.current_source": "Current Source",
     "item.eln2.ground": "Ground Pin",
     "item.eln2.resistor": "Resistor",
     "item.eln2.thermal_radiator": "Thermal Radiator",
