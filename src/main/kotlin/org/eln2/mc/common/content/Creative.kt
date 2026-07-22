@@ -71,3 +71,30 @@ class VoltageSourcePart(ci: PartCreateInfo) : CellPart<VoltageSourceCell>(ci, El
         builder.quantityOutput(cell.voltageSource.source.readouts.power)
     }
 }
+
+class CurrentSourceCell(
+    ci: CellCreateInfo,
+    override val electricalMap: MonopoleMap,
+    override val electricalSize: ElectricalSize
+) : Cell(ci), SidedElectricalMonoMapped<VoltageSourceCell> {
+    @SimObject
+    val voltageSource = CurrentSourceObject(this).also {
+        it.source.current = DEFAULT_CURRENT
+    }
+
+    override fun loadCellData(tag: CompoundTag) {
+        voltageSource.source.current = if (tag.contains(CURRENT)) tag.getDouble(CURRENT) else DEFAULT_CURRENT
+    }
+
+    override fun saveCellData(): CompoundTag {
+        val tag = CompoundTag()
+        tag.putDouble(CURRENT, voltageSource.source.potential)
+
+        return tag
+    }
+
+    companion object {
+        const val CURRENT = "potential"
+        const val DEFAULT_CURRENT = 10.0
+    }
+}
