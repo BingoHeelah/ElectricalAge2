@@ -75,6 +75,7 @@ object FlwModels {
     //#endregion
 
     val VOLTAGE_SOURCE = partialBlock("voltage_source")
+    val CURRENT_SOURCE = partialBlock("current_source")
     val GROUND = partialBlock("ground_pin")
     val GROUND_MICRO_GRID = partialBlock("ground_pin_micro_grid")
 

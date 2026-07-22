@@ -65,6 +65,17 @@ object Eln2BasicComponents : ContentModule() {
 
     val VOLTAGE_SOURCE_PART = partImmediateBB("voltage_source", 6.0, 2.5, 6.0, ::VoltageSourcePart)
 
+    val CURRENT_SOURCE_CELL = cellMemoize("current_source") {
+        val map = monopolarMapPlanar(Base6Direction3d.Front)
+        val size = ElectricalSize.Standard
+
+        CellFactory {
+            CurrentSourceCell(it, map, size)
+        }
+    }
+
+    val CURRENT_SOURCE_PART = partImmediateBB("current_source", 6.0, 2.5, 6.0, ::CurrentSourcePart)
+
     val GROUND_CELL = cellImmediate("ground", ::GroundCell)
 
     val GROUND_PART = partImmediateBB("ground", 4.0, 4.0, 4.0, ::GroundPart)

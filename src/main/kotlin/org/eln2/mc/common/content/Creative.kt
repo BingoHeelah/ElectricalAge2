@@ -98,3 +98,31 @@ class CurrentSourceCell(
         const val DEFAULT_CURRENT = 10.0
     }
 }
+
+class CurrentSourcePart(ci: PartCreateInfo) : CellPart<CurrentSourceCell>(ci, Eln2BasicComponents.CURRENT_SOURCE_CELL.get()), ComponentDisplay, WrenchRotatable {
+    override fun createVisual(ctx: MultipartVisualizationContext) = BasicPartVisual(ctx, this, FlwModels.CURRENT_SOURCE)
+
+    override fun onUsedBy(context: PartUseInfo): InteractionResult {
+        if(placement.level.isClientSide) {
+            return InteractionResult.PASS
+        }
+
+        val increment = if(context.player.isShiftKeyDown) {
+            -1.0
+        }
+        else {
+            1.0
+        }
+
+        cell.voltageSource.source.current = (cell.voltageSource.source.current + increment).coerceIn(0.0, 5000.0)
+
+        return InteractionResult.SUCCESS
+    }
+
+    override fun submitDisplay(builder: ComponentDisplayList) {
+        builder.debugInIDE { "crossResistance: ${Quantity(cell.voltageSource.resistors.crossResistance, OHM).classify()}" }
+        builder.quantityOutput(cell.voltageSource.source.readouts.potential)
+        builder.quantityOutput(cell.voltageSource.source.readouts.current)
+        builder.quantityOutput(cell.voltageSource.source.readouts.power)
+    }
+}
