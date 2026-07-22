@@ -690,6 +690,31 @@ class VoltageSourceObject(cell: Cell) : ElectricalObject<Cell>(cell) {
     }
 }
 
+class CurrentSourceObject(cell: Cell) : ElectricalObject<Cell>(cell) {
+    val source = CurrentSource()
+    val resistors = ResistorBundle(cell, 1e-4)
+
+    override fun offerPolar(remote: ElectricalObject<*>) = resistors.getOfferedResistor(remote)
+
+    override fun clearComponents() {
+        resistors.clear()
+    }
+
+    override fun addComponents(circuit: ElectricalComponentSet) {
+        circuit.add(source)
+        resistors.addComponents(connections, circuit)
+    }
+
+    override fun build(map: ElectricalConnectivityMap) {
+        map.ground(source.offerInternal())
+        resistors.build(connections, this, map)
+
+        resistors.forEach {
+            map.join(it.offerInternal(), source.offerExternal())
+        }
+    }
+}
+
 class GroundObject(cell: Cell) : ElectricalObject<Cell>(cell) {
     val resistors = ResistorBundle(cell, 1e-5)
 
