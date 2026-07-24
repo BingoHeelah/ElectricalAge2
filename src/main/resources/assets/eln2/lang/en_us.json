@@ -150,6 +150,8 @@
     "item.eln2.drill.mode.Area3x3.name": "Drill 3x3 Area",
     "item.eln2.drill.mode.Area5x5.name": "Drill 5x5 Area",
     "item.eln2.flashlight": "Flashlight",
+    "item.eln2.creosote_brush": "Creosote Brush",
+    "item.eln2.enamel_brush": "Enamel Brush",
 
     // Valves:
     "item.eln2.fluid_pipe_extraction_valve": "Fluid Pipe Extraction Valve",
@@ -353,6 +355,16 @@
     "block.eln2.brushed_dc_motor_vacuum_sealing": "Brushed DC Motor Vacuum Sealing Station",
     "menu.eln2.vacuum_sealing": "Vacuum Sealing Station",
     "menu.eln2.advanced_coal_burner": "Advanced Coal Burner",
+    "menu.eln2.furnace": "Electrical Furnace",
+    "menu.eln2.alloying_smelter": "Alloying Smelter",
+    "menu.eln2.burner_reactor": "Burner Reactor",
+    "menu.eln2.electrolysis": "Electrolysis",
+    "menu.eln2.hydrogen_reduction_furnace": "Hydrogen Reduction Furnace",
+    "menu.eln2.power_cell_charger": "Power Cell Charger",
+    "menu.eln2.coke_oven": "Coke Oven",
+    "menu.eln2.crusher": "Crusher",
+    "menu.eln2.extruder": "Extruder",
+    "menu.eln2.rolling_machine": "Rolling Machine",
     "block.eln2.alloying_smelter": "Alloying Smelter",
     "block.eln2.hydrogen_reduction_furnace": "Hydrogen Reduction Furnace",
     "block.eln2.burner_reactor": "Burner Reactor",
@@ -514,5 +526,44 @@
     "recipe.eln2.vacuum_sealing": "Vacuum Sealing",
 
     "jei.eln2.vulcanizing.temperature_range": "Temperature: %s\u00B0C - %s\u00B0C",
-    "jei.eln2.vulcanizing.burnt": "Result when overheated"
+    "jei.eln2.vulcanizing.burnt": "Result when overheated",
+
+    "tooltip.eln2.power_cell.charge": "Charge",
+    "tooltip.eln2.power_cell.capacity": "Capacity",
+    "tooltip.eln2.power_cell.max_in": "Max charge rate",
+    "tooltip.eln2.power_cell.max_out": "Max discharge rate",
+    "tooltip.eln2.power_cell.efficiency": "Round-trip efficiency",
+
+    "tooltip.eln2.drill.power": "Power demand",
+    "tooltip.eln2.drill.mode": "Mode",
+
+    "tooltip.eln2.flashlight.power": "Power demand",
+
+    "tooltip.eln2.heating_element.max_temp": "Max temperature",
+    "tooltip.eln2.heating_element.burnt": "Burnt out - replace in machine",
+
+    "tooltip.eln2.light_bulb.life": "Life",
+
+    "tooltip.eln2.wrench.use": "Right-click to rotate parts, Shift+Right-click for special actions",
+    "tooltip.eln2.wrench.rotate": "Shift rotates the opposite direction",
+
+    "tooltip.eln2.screwdriver.use": "Right-click to set value, Shift+Right-click to apply to a block",
+    "tooltip.eln2.screwdriver.scroll": "Shift+Scroll to adjust in-world",
+
+    "tooltip.eln2.grid_pliers.use": "Right-click a grid cable to cut and retrieve it",
+
+    "tooltip.eln2.fluid_pipe_module.use": "Install in a fluid pipe block",
+
+    "tooltip.eln2.electrode.use": "Install in an electrolysis device",
+    "tooltip.eln2.separator.use": "Install in an electrolysis device",
+
+    "tooltip.eln2.fluid.state": "State",
+    "tooltip.eln2.fluid.gaseous": "Gas",
+    "tooltip.eln2.fluid.liquid": "Liquid",
+    "tooltip.eln2.fluid.specific_heat": "Specific heat",
+    "tooltip.eln2.fluid.density": "Density",
+    "tooltip.eln2.fluid.boiling_point": "Boiling point",
+    "tooltip.eln2.fluid.vaporization_enthalpy": "Heat of vaporization",
+    "tooltip.eln2.fluid.condensation_point": "Condensation point",
+    "tooltip.eln2.fluid.condensation_enthalpy": "Heat of condensation"
 }
