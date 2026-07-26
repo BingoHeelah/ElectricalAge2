@@ -34,7 +34,14 @@ import org.eln2.mc.common.content.processing.*
 import org.eln2.mc.common.recipes.foundation.CatalyzedSimpleProcessingRecipe
 import org.eln2.mc.common.recipes.foundation.DirectSimpleProcessingRecipe
 import org.eln2.mc.resource
+import net.minecraft.world.level.material.Fluid
+import org.eln2.mc.common.content.modules.Eln2ForgeFluids
+import org.eln2.mc.common.fluids.foundation.FluidTransformation
+import org.eln2.mc.common.fluids.foundation.FluidTransformationManager
+import org.eln2.mc.common.fluids.foundation.PhysicalFluid
+import org.eln2.mc.common.fluids.foundation.PhysicalFluidManager
 import java.util.function.Supplier
+import kotlin.math.ceil
 
 /**
  * Each processing machine recipe type gets one category
@@ -52,6 +59,8 @@ class Eln2Jei : IModPlugin {
     private lateinit var hydrogenReductionCategory: HydrogenReductionCategory
     private lateinit var electrolysisCategory: ElectrolysisCategory
     private lateinit var vacuumSealingCategory: VacuumSealingCategory
+    private lateinit var phaseChangeCategory: PhaseChangeCategory
+    private lateinit var treeExtractionCategory: TreeExtractionCategory
 
     override fun getPluginUid(): ResourceLocation = resource("jei_plugin")
 
@@ -67,9 +76,10 @@ class Eln2Jei : IModPlugin {
         vulcanizingCategory = VulcanizingCategory(registration.jeiHelpers.guiHelper)
         burningCategory = BurningCategory(registration.jeiHelpers.guiHelper)
         hydrogenReductionCategory = HydrogenReductionCategory(registration.jeiHelpers.guiHelper)
-
         vacuumSealingCategory = VacuumSealingCategory(registration.jeiHelpers.guiHelper)
         electrolysisCategory = ElectrolysisCategory(registration.jeiHelpers.guiHelper)
+        phaseChangeCategory = PhaseChangeCategory()
+        treeExtractionCategory = TreeExtractionCategory(registration.jeiHelpers.guiHelper)
         registration.addRecipeCategories(
             crushingCategory,
             rollingCategory,
@@ -80,7 +90,9 @@ class Eln2Jei : IModPlugin {
             burningCategory,
             hydrogenReductionCategory,
             electrolysisCategory,
-            vacuumSealingCategory
+            vacuumSealingCategory,
+            phaseChangeCategory,
+            treeExtractionCategory
         )
     }
 
@@ -103,6 +115,17 @@ class Eln2Jei : IModPlugin {
         registerCategory(registration, electrolysisCategory, recipeManager, Eln2Processing.ELECTROLYSIS_RECIPE)
         registerCategory(registration, vacuumSealingCategory, recipeManager, Eln2Processing.VACUUM_SEALING_RECIPE)
         registerCategory(registration, hydrogenReductionCategory, recipeManager, Eln2Processing.HYDROGEN_REDUCTION_RECIPE)
+
+        // Phase change recipes are data-driven, not from the recipe manager:
+        val phaseChangeRecipes = FluidTransformationManager.transformationsByFluid.mapNotNull { (fluid, transformation) ->
+            val physicalFluid = PhysicalFluidManager.getProperties(fluid) ?: return@mapNotNull null
+            PhaseChangeDisplay(fluid, physicalFluid, transformation)
+        }
+        registration.addRecipes(phaseChangeCategory.jeiRecipeType, phaseChangeRecipes)
+
+        // Tree extraction recipes are data-driven, not from the recipe manager:
+        val treeExtractionRecipes = TreeExtractionManager.getEntries().map { TreeExtractionDisplay(it) }
+        registration.addRecipes(treeExtractionCategory.jeiRecipeType, treeExtractionRecipes)
     }
 
     /**
@@ -127,6 +150,12 @@ class Eln2Jei : IModPlugin {
                 registration.addRecipeCatalyst(catalyst.get(), category.jeiRecipeType)
             }
         }
+
+        registration.addRecipeCatalyst(ItemStack(Eln2Processing.INSULATED_DISTILLATION_MODULE_BLOCK.item.get()), phaseChangeCategory.jeiRecipeType)
+        registration.addRecipeCatalyst(ItemStack(Eln2Processing.CONDENSER_DISTILLATION_MODULE_BLOCK.item.get()), phaseChangeCategory.jeiRecipeType)
+        registration.addRecipeCatalyst(ItemStack(Eln2ForgeFluids.IRON_TANK.blockAndItem.item.get()), phaseChangeCategory.jeiRecipeType)
+
+        registration.addRecipeCatalyst(ItemStack(Eln2Processing.TREE_TAP_PART.item.get()), treeExtractionCategory.jeiRecipeType)
     }
 
     private inline fun <reified T : Recipe<SimpleContainer>> registerCategory(
@@ -869,5 +898,244 @@ class ElectrolysisCategory(guiHelper: IGuiHelper) : Eln2RecipeCategory<AqueousEl
         else {
             noteArrow(graphics, 62, 15)
         }
+    }
+}
+
+/**
+ * Synthetic JEI display data for a fluid's phase change information.
+ * Each entry wraps a single [Fluid] that has both [PhysicalFluid] properties and a [FluidTransformation] (boiling or condensation with optional residues).
+ * */
+class PhaseChangeDisplay(
+    val fluid: Fluid,
+    val physicalFluid: PhysicalFluid,
+    val transformation: FluidTransformation
+)
+
+/**
+ * JEI category for fluid phase changes.
+ * Shows the input fluid with properties on the right, the boiling result (gas + optional liquid residue) above, and the condensation result (liquid + optional gas residue) below.
+ * Unlike other [Eln2RecipeCategory]s, this category works with data-driven [FluidTransformation]s rather than Minecraft recipes.
+ * */
+class PhaseChangeCategory : IRecipeCategory<PhaseChangeDisplay> {
+    val jeiRecipeType = RecipeType(resource("phase_change"), PhaseChangeDisplay::class.java)
+
+    private val slot = SlotBackground()
+
+    override fun getRecipeType(): RecipeType<PhaseChangeDisplay> = jeiRecipeType
+
+    override fun getTitle(): Component = Component.translatable("recipe.eln2.phase_change")
+
+    override fun getWidth(): Int = 177
+
+    override fun getHeight(): Int = 85
+
+    override fun getIcon(): IDrawable = ItemIcon(ItemStack(Eln2Processing.INSULATED_DISTILLATION_MODULE_BLOCK.item.get()))
+
+    override fun setRecipe(builder: IRecipeLayoutBuilder, recipe: PhaseChangeDisplay, focuses: IFocusGroup) {
+        // Input fluid slot, middle-left
+        builder.addSlot(RecipeIngredientRole.INPUT, 12, 38)
+            .setBackground(slot, -1, -1)
+            .addFluidStack(recipe.fluid, FluidType.BUCKET_VOLUME.toLong())
+            .setFluidRenderer(FluidType.BUCKET_VOLUME.toLong(), false, 16, 16)
+
+        // Boiling result above the input
+        recipe.transformation.boiling?.let { boiling ->
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 12, 12)
+                .setBackground(slot, -1, -1)
+                .addFluidStack(boiling.resultGas, FluidType.BUCKET_VOLUME.toLong())
+                .setFluidRenderer(FluidType.BUCKET_VOLUME.toLong(), false, 16, 16)
+
+            boiling.resultLiquidResidue?.let { residue ->
+                builder.addSlot(RecipeIngredientRole.OUTPUT, 34, 12)
+                    .setBackground(slot, -1, -1)
+                    .addFluidStack(residue, FluidType.BUCKET_VOLUME.toLong())
+                    .setFluidRenderer(FluidType.BUCKET_VOLUME.toLong(), false, 16, 16)
+            }
+        }
+
+        // Condensation result below the input
+        recipe.transformation.condensation?.let { condensation ->
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 12, 64)
+                .setBackground(slot, -1, -1)
+                .addFluidStack(condensation.resultLiquid, FluidType.BUCKET_VOLUME.toLong())
+                .setFluidRenderer(FluidType.BUCKET_VOLUME.toLong(), false, 16, 16)
+
+            condensation.resultGasResidue?.let { residue ->
+                builder.addSlot(RecipeIngredientRole.OUTPUT, 34, 64)
+                    .setBackground(slot, -1, -1)
+                    .addFluidStack(residue, FluidType.BUCKET_VOLUME.toLong())
+                    .setFluidRenderer(FluidType.BUCKET_VOLUME.toLong(), false, 16, 16)
+            }
+        }
+    }
+
+    override fun draw(
+        recipe: PhaseChangeDisplay,
+        recipeSlotsView: IRecipeSlotsView,
+        graphics: GuiGraphics,
+        mouseX: Double,
+        mouseY: Double
+    ) {
+        val font = Minecraft.getInstance().font
+        val phys = recipe.physicalFluid
+        val trans = recipe.transformation
+
+        val pose = graphics.pose()
+        pose.pushPose()
+        pose.scale(0.5f, 0.5f, 1.0f)
+
+        val xLabel = 120
+        val labelColor = 0x808080
+        val valueColor = 0x000000
+        val lineHeight = 14
+        var y = 20
+
+        // State: Gaseous / Liquid
+        val stateLabel = Component.translatable("tooltip.eln2.fluid.state")
+        val stateValue = Component.translatable(if (phys.isGaseous) "tooltip.eln2.fluid.gaseous" else "tooltip.eln2.fluid.liquid")
+        graphics.drawString(font, stateLabel, xLabel, y, labelColor, false)
+        graphics.drawString(font, stateValue, xLabel + font.width(stateLabel) + 4, y, valueColor, false)
+        y += lineHeight
+
+        // Density
+        val densityLabel = Component.translatable("tooltip.eln2.fluid.density")
+        val densityValue = Component.literal(phys.density.classify())
+        graphics.drawString(font, densityLabel, xLabel, y, labelColor, false)
+        graphics.drawString(font, densityValue, xLabel + font.width(densityLabel) + 4, y, valueColor, false)
+        y += lineHeight
+
+        // Specific Heat Capacity
+        val shcLabel = Component.translatable("tooltip.eln2.fluid.specific_heat")
+        val shcValue = Component.literal(phys.specificHeatCapacity.classify())
+        graphics.drawString(font, shcLabel, xLabel, y, labelColor, false)
+        graphics.drawString(font, shcValue, xLabel + font.width(shcLabel) + 4, y, valueColor, false)
+        y += lineHeight
+
+        // Boiling info
+        trans.boiling?.let { boiling ->
+            val tempLabel = Component.translatable("tooltip.eln2.fluid.boiling_point")
+            val tempValue = Component.literal(Eln2Config.clientConfig.classifyWithOverride(boiling.temperature))
+            graphics.drawString(font, tempLabel, xLabel, y, labelColor, false)
+            graphics.drawString(font, tempValue, xLabel + font.width(tempLabel) + 4, y, 0xFF5555, false)
+            y += lineHeight
+
+            val enthalpyLabel = Component.translatable("tooltip.eln2.fluid.vaporization_enthalpy")
+            val enthalpyValue = Component.literal(boiling.enthalpy.classify())
+            graphics.drawString(font, enthalpyLabel, xLabel, y, labelColor, false)
+            graphics.drawString(font, enthalpyValue, xLabel + font.width(enthalpyLabel) + 4, y, valueColor, false)
+
+            // Boiling temperature between input and boiling result
+            val tempText = Eln2Config.clientConfig.classifyWithOverride(boiling.temperature)
+            graphics.drawString(font, tempText, 20 * 2 - font.width(tempText) / 2, 30 * 2, 0xFF5555, false)
+        }
+
+        // Condensation info
+        trans.condensation?.let { condensation ->
+            val tempLabel = Component.translatable("tooltip.eln2.fluid.condensation_point")
+            val tempValue = Component.literal(Eln2Config.clientConfig.classifyWithOverride(condensation.temperature))
+            graphics.drawString(font, tempLabel, xLabel, y, labelColor, false)
+            graphics.drawString(font, tempValue, xLabel + font.width(tempLabel) + 4, y, 0x5555FF, false)
+            y += lineHeight
+
+            val enthalpyLabel = Component.translatable("tooltip.eln2.fluid.condensation_enthalpy")
+            val enthalpyValue = Component.literal(condensation.enthalpy.classify())
+            graphics.drawString(font, enthalpyLabel, xLabel, y, labelColor, false)
+            graphics.drawString(font, enthalpyValue, xLabel + font.width(enthalpyLabel) + 4, y, valueColor, false)
+
+            // Condensation temperature between input and condensation result
+            val tempText = Eln2Config.clientConfig.classifyWithOverride(condensation.temperature)
+            graphics.drawString(font, tempText, 20 * 2 - font.width(tempText) / 2, 55 * 2, 0x5555FF, false)
+        }
+
+        pose.popPose()
+    }
+}
+
+/**
+ * Synthetic JEI display data for tree extraction recipes (rubber tap).
+ * Each entry maps a log block to the harvestable item.
+ * */
+class TreeExtractionDisplay(
+    val entry: TreeExtractionManager.Entry
+) {
+    val logItem: ItemStack get() = ItemStack(entry.log)
+    val resultItem: ItemStack get() = ItemStack(entry.resultItem)
+}
+
+/**
+ * JEI category for the tree tap (rubber tapping).
+ * Shows the log block, a progress arrow, and the output item with a time range above the arrow.
+ * */
+class TreeExtractionCategory(guiHelper: IGuiHelper) : IRecipeCategory<TreeExtractionDisplay> {
+    val jeiRecipeType = RecipeType(resource("tree_extraction"), TreeExtractionDisplay::class.java)
+
+    private val slot = SlotBackground()
+    private val arrowTimer = guiHelper.createTickTimer(40, 24, false)
+
+    override fun getRecipeType(): RecipeType<TreeExtractionDisplay> = jeiRecipeType
+
+    override fun getTitle(): Component = Component.translatable("recipe.eln2.tree_extraction")
+
+    override fun getWidth(): Int = 177
+
+    override fun getHeight(): Int = 70
+
+    override fun getIcon(): IDrawable = ItemIcon(ItemStack(Eln2Processing.TREE_TAP_PART.item.get()))
+
+    override fun setRecipe(builder: IRecipeLayoutBuilder, recipe: TreeExtractionDisplay, focuses: IFocusGroup) {
+        builder.addSlot(RecipeIngredientRole.INPUT, 27, 29)
+            .setBackground(slot, -1, -1)
+            .addItemStack(recipe.logItem)
+
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 132, 29)
+            .setBackground(slot, -1, -1)
+            .addItemStack(recipe.resultItem)
+    }
+
+    override fun draw(
+        recipe: TreeExtractionDisplay,
+        recipeSlotsView: IRecipeSlotsView,
+        graphics: GuiGraphics,
+        mouseX: Double,
+        mouseY: Double
+    ) {
+        // Progress arrow
+        val texture = resource("textures/gui/container/progress_arrows.png")
+        graphics.blit(
+            texture,
+            62, 32,
+            0.0f, 0.0f,
+            22, 15,
+            32, 32
+        )
+
+        val progress = arrowTimer.value * 22.0f / 24.0f
+
+        if (progress > 0) {
+            graphics.blit(
+                texture,
+                62, 32,
+                0.0f, 16.0f,
+                progress.toInt(), 16,
+                32, 32
+            )
+        }
+
+        // Time range above the arrow
+        val font = Minecraft.getInstance().font
+        val minScans = ceil(1.0 / recipe.entry.maxBaseProgress).toInt().coerceAtLeast(1)
+        val maxScans = ceil(1.0 / recipe.entry.minBaseProgress).toInt().coerceAtLeast(1)
+        val minSeconds = minScans * 3
+        val maxSeconds = maxScans * 5
+        val timeText = "${minSeconds}s - ${maxSeconds}s"
+
+        graphics.drawString(
+            font,
+            timeText,
+            62 + 11 - font.width(timeText) / 2,
+            20,
+            0x808080,
+            false
+        )
     }
 }

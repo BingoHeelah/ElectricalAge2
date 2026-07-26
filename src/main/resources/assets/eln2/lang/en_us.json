@@ -152,6 +152,7 @@
     "item.eln2.flashlight": "Flashlight",
     "item.eln2.creosote_brush": "Creosote Brush",
     "item.eln2.enamel_brush": "Enamel Brush",
+    "tooltip.eln2.brush.uses_remaining": "Uses Remaining",
 
     // Valves:
     "item.eln2.fluid_pipe_extraction_valve": "Fluid Pipe Extraction Valve",
@@ -524,6 +525,8 @@
     "recipe.eln2.hydrogen_reduction": "Hydrogen Reduction",
     "recipe.eln2.electrolysis": "Electrolysis",
     "recipe.eln2.vacuum_sealing": "Vacuum Sealing",
+    "recipe.eln2.phase_change": "Phase Change",
+    "recipe.eln2.tree_extraction": "Tree Extraction",
 
     "jei.eln2.vulcanizing.temperature_range": "Temperature: %s\u00B0C - %s\u00B0C",
     "jei.eln2.vulcanizing.burnt": "Result when overheated",
@@ -565,5 +568,9 @@
     "tooltip.eln2.fluid.boiling_point": "Boiling point",
     "tooltip.eln2.fluid.vaporization_enthalpy": "Heat of vaporization",
     "tooltip.eln2.fluid.condensation_point": "Condensation point",
-    "tooltip.eln2.fluid.condensation_enthalpy": "Heat of condensation"
+    "tooltip.eln2.fluid.condensation_enthalpy": "Heat of condensation",
+
+    "hover.eln2.phase_change.bottom": "Bottom: drains the densest fluid, accepts gas and liquid",
+    "hover.eln2.phase_change.top": "Top: drains gas, accepts liquid",
+    "hover.eln2.phase_change.side": "Side: drains liquid, accepts gas and liquid"
 }
